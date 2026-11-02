@@ -1,0 +1,21 @@
+{
+  "name": "esm-alugha-cli",
+  "version": "0.1.0",
+  "description": "CLI for Alugha (video hosting) used by Encounter ESM: videos, tracks, subtitles, audio, publishing",
+  "type": "module",
+  "bin": {
+    "esm-alugha-cli": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "bun build src/index.ts --outfile dist/index.js --target bun",
+    "dev": "bun run src/index.ts"
+  },
+  "dependencies": {
+    "commander": "^13.0.0",
+    "picocolors": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.0"
+  }
+}
