@@ -71,8 +71,24 @@ const accountFromEnv = (): Account | null => {
   return email && password ? { email, password } : null;
 };
 
-/** Session tokens obtained in this process for an env-provided account. */
-let envSession: Account | null = null;
+/**
+ * Session tokens of an env-provided account, kept on disk (never the
+ * password) so each command reuses them: Alugha rate-limits `login` and
+ * refuses after a few logins in a row.
+ */
+const ENV_SESSION_FILE = join(TOKEN_DIR, `${APP_CLI}.env-session.json`);
+
+type EnvSession = Omit<Account, "password">;
+
+const readEnvSession = (email: string): EnvSession | null => {
+  if (!existsSync(ENV_SESSION_FILE)) return null;
+  try {
+    const session = JSON.parse(readFileSync(ENV_SESSION_FILE, "utf-8")) as EnvSession;
+    return session.email === email ? session : null;
+  } catch {
+    return null;
+  }
+};
 
 export const usesEnvAccount = (): boolean => Boolean(accountFromEnv());
 
@@ -82,7 +98,7 @@ export function hasAccount(profile?: string): boolean {
 
 export function readAccount(profile?: string): Account {
   const fromEnv = accountFromEnv();
-  if (fromEnv) return envSession && envSession.email === fromEnv.email ? envSession : fromEnv;
+  if (fromEnv) return { ...readEnvSession(fromEnv.email), ...fromEnv };
   const name = resolveProfile(profile);
   if (!existsSync(accountPath(name))) {
     throw new CliError(
@@ -94,16 +110,21 @@ export function readAccount(profile?: string): Account {
   return JSON.parse(readFileSync(accountPath(name), "utf-8")) as Account;
 }
 
-/** Saves the account; env-provided accounts only keep their session in memory. */
+/** Saves the account; env-provided accounts only keep their session tokens. */
 export function saveAccount(account: Account, profile?: string): void {
   if (usesEnvAccount()) {
-    envSession = account;
+    const { password: _password, ...session } = account;
+    writePrivate(ENV_SESSION_FILE, `${JSON.stringify(session, null, 2)}\n`);
     return;
   }
   writePrivate(accountPath(resolveProfile(profile)), `${JSON.stringify(account, null, 2)}\n`);
 }
 
 export function removeAccount(profile?: string): void {
+  if (usesEnvAccount()) {
+    if (existsSync(ENV_SESSION_FILE)) unlinkSync(ENV_SESSION_FILE);
+    return;
+  }
   const path = accountPath(resolveProfile(profile));
   if (existsSync(path)) unlinkSync(path);
 }

@@ -15,6 +15,7 @@ import { CliError, handleError } from "../lib/errors.js";
 import { readInput, writeOutput } from "../lib/io.js";
 import { log } from "../lib/logger.js";
 import { output } from "../lib/output.js";
+import { getTrackHistory } from "../lib/track-history.js";
 
 const LANG_HELP = "Language: Alugha code (fra, deu, eng-us...) or ISO (fr, de, en)";
 
@@ -59,6 +60,51 @@ tracksResource
         { trackId: track.id, input: { title: opts.title, description: opts.description } },
       );
       output(updateTrack);
+    } catch (err) {
+      handleError(err, globalFlags.json);
+    }
+  });
+
+const shortDate = (iso: string | null | undefined) => (iso ? iso.slice(0, 16).replace("T", " ") : "-");
+
+tracksResource
+  .command("list")
+  .alias("history")
+  .description("What is on a video, and since when: per language, subtitles, voice-over audio and other assets with their dates")
+  .argument("<video-id>", "Alugha video id")
+  .argument("[langs...]", "Only these languages")
+  .addHelpText(
+    "after",
+    `
+Dates are UTC. subtitles = first / last publish (Alugha reuses the subtitle file on
+each publish); audio = when the current voice-over was attached; "-" = not on Alugha.
+
+Examples:
+  esm-alugha-cli tracks list <video-id>
+  esm-alugha-cli tracks list <video-id> fr de --json`,
+  )
+  .action(async (videoId: string, langs: string[]) => {
+    try {
+      const history = await getTrackHistory(videoId);
+      const codes = langs.map(toAlughaLang);
+      const tracks = codes.length
+        ? history.tracks.filter((t) => codes.some((c) => t.lang === c || t.lang.split("-")[0] === c.split("-")[0]))
+        : history.tracks;
+      if (globalFlags.json || globalFlags.format !== "text") {
+        output({ ...history, tracks });
+        return;
+      }
+      output(
+        tracks.map((t) => ({
+          lang: t.lang,
+          track: shortDate(t.trackCreated),
+          subtitlesFirst: shortDate(t.subtitles?.firstPublished),
+          subtitlesLast: shortDate(t.subtitles?.lastPublished),
+          audio: shortDate(t.audio?.added),
+          closedCaptions: shortDate(t.closedCaptions?.added),
+          audioDescription: shortDate(t.audioDescription?.added),
+        })),
+      );
     } catch (err) {
       handleError(err, globalFlags.json);
     }

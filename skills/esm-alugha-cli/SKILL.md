@@ -50,6 +50,9 @@ esm-alugha-cli videos list [--search q1.c2] [--limit 50] [--order MODIFIED_DESC]
 esm-alugha-cli videos get <video-id>            # tracks (languages), audio, published subtitles, voices
 
 # Tracks
+esm-alugha-cli tracks list <video-id> [fr de] [--json]   # what is on the video and since when (UTC):
+#   per language: track created, subtitles first/last publish, voice-over audio added,
+#   closed captions, audio description ("-" = not on Alugha)
 esm-alugha-cli tracks create <video-id> fra [--name "..."]
 esm-alugha-cli tracks update <video-id> fra --title "Titre" [--description "..."]
 
