@@ -1,8 +1,10 @@
 #!/usr/bin/env bun
 import { Command } from "commander";
+import { selfUpdateCommand } from "./commands/self-update.js";
 import { authCommand } from "./commands/auth.js";
 import { gqlCommand } from "./commands/gql.js";
 import { globalFlags } from "./lib/config.js";
+import { notifyUpdate } from "./lib/update.js";
 import { defaultProfile } from "./lib/session.js";
 import {
   audioResource,
@@ -55,6 +57,7 @@ Quick start:
     globalFlags.noColor = root.color === false;
     globalFlags.noHeader = root.header === false;
     globalFlags.profile = root.profile ?? defaultProfile();
+    if (actionCmd.name() !== "self-update") notifyUpdate();
   });
 
 program.addCommand(authCommand);
@@ -65,5 +68,6 @@ program.addCommand(audioResource);
 program.addCommand(publishCommand);
 program.addCommand(jobsResource);
 program.addCommand(gqlCommand);
+program.addCommand(selfUpdateCommand);
 
 program.parse();

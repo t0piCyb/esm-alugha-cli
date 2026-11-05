@@ -84,3 +84,11 @@ Global flags: `-p/--profile`, `--json`, `--format <text|json|csv|yaml>`,
   user first.
 - SRT for Alugha keeps its line breaks (the FTO convention: stored without line
   breaks, exported with them).
+
+## Updates
+
+Once a day esm-alugha-cli checks GitHub for a newer version. When a command prints
+**Update available** on stderr (or `meta.update` in `--json` output), or an
+error says the CLI is too old: tell the user, run `esm-alugha-cli self-update`, re-read
+this skill (it is updated with the CLI), then run the command again.
+`esm-alugha-cli self-update --check` checks right away.

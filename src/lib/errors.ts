@@ -46,6 +46,7 @@ export const SUGGESTIONS: Record<number, string> = {
   401: "Log in again: esm-alugha-cli auth login",
   403: "This Alugha account cannot edit that video (see: esm-alugha-cli auth test).",
   404: "Not found. Check the Alugha video id or the language (fra, deu...).",
+  426: "This CLI is too old for the API. Update it: esm-alugha-cli self-update",
   429: "Rate limited. Wait a moment and try again.",
   500: "Server error. Try again later.",
 };
