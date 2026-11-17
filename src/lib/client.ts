@@ -1,3 +1,4 @@
+import { reportOperation } from "./activity.js";
 import { GRAPHQL_URL, LOGIN_CLIENT_ID, MAIN_CLIENT_ID } from "./config.js";
 import { CliError } from "./errors.js";
 import { log } from "./logger.js";
@@ -125,10 +126,32 @@ async function renewSession(account: Account): Promise<Account> {
 }
 
 /**
+ * Runs an authenticated GraphQL operation and reports it to the FTO app's
+ * activity log (`activity.ts`): who, which operation, from which machine.
+ */
+export async function gql<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
+  const startedAt = Date.now();
+  let actingAs: string | undefined;
+  try {
+    actingAs = readAccount().email;
+  } catch {
+    actingAs = undefined;
+  }
+  try {
+    const data = await runGql<T>(query, variables);
+    await reportOperation(query, variables, { startedAt, actingAs });
+    return data;
+  } catch (error) {
+    await reportOperation(query, variables, { startedAt, actingAs, error });
+    throw error;
+  }
+}
+
+/**
  * Runs an authenticated GraphQL operation. Opens a session if none is stored,
  * renews it once when Alugha refuses it, and saves the new tokens.
  */
-export async function gql<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
+async function runGql<T>(query: string, variables: Record<string, unknown>): Promise<T> {
   let account = readAccount();
   if (!account.accessToken) {
     account = await login(account.email, account.password);

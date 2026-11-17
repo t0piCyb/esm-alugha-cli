@@ -38,3 +38,14 @@ See `skills/esm-alugha-cli/SKILL.md` (also used by AI agents).
 - `src/lib/alugha.ts` - languages, tracks, SRT parsing, asset upload
 - `src/resources/` - videos, tracks/subtitles/audio/publish/jobs
 - `src/commands/` - auth, raw `gql`
+- `src/lib/activity.ts` - reports to the FTO activity log
+
+## Activity log
+
+Every Alugha operation is reported to the FTO app's activity log
+(`POST <app>/api/v1/activity/report`): who (the FTO user), which operation,
+the command line, this machine and the Alugha account used. Writes and
+failures also reach the team's Discord channel. The report is signed with
+your FTO API key, the one `esm-fto-cli auth set <key>` stores
+(`ESM_FTO_API_KEY` / `ESM_FTO_PROFILE` override it); without it nothing is
+reported. A report never fails a command.
